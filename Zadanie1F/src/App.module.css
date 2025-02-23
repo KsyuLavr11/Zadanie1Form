@@ -1,0 +1,23 @@
+.button {
+	border-radius: 8px;
+	border: 1px solid transparent;
+	font-size: 60%;
+	font-weight: 500;
+	font-family: inherit;
+	background-color: rgb(127, 73, 228);
+	border: 1px solid rgb(12, 12, 12);
+	cursor: pointer;
+	margin: 1%;
+}
+.button:active {
+	background-color: blue;
+	border: 3px solid rgb(12, 12, 12);
+}
+
+.input {
+	margin: 1%;
+}
+.error {
+	color: red;
+	font-size: 60%;
+}
