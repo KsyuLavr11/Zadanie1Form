@@ -1,6 +1,27 @@
+import * as yup from 'yup';
 import { useState, useEffect, useRef } from 'react';
 import styles from './App.module.css';
 
+const emailChangeScheme = yup
+	.string()
+	.matches(
+		/^[a-zA-Z0-9_@.]+$/,
+		'Неверный email.Допустимые символы - латинские буквы, цифры и нижнее подчеркивание',
+	)
+	.max(30, 'Неверный email. Должно быть меньше 30 символов.')
+	.min(3, 'Неверный email. Должно быть больше 3 символов.');
+const passwordChangeScheme = yup
+	.string()
+	.min(5, 'Пароль должен быть не менее 5 символов.');
+
+const validateAndGetErrorMessange = (scheme, value) => {
+	try {
+		scheme.validateSync(value);
+		return null;
+	} catch ({ errors }) {
+		return errors;
+	}
+};
 const initialState = {
 	email: '',
 	password: '',
@@ -38,47 +59,39 @@ export const App = () => {
 		updateState(target.name, target.value);
 		if (target.name === 'email') {
 			checkingValidityEmail(target.value);
-		} else if (target.name === 'password2') {
-			checkingPasswordVerification();
 		}
 	};
 
 	const checkingValidityEmail = (value) => {
-		let error = null;
-		if (!/^[a-zA-Z0-9_@.]+$/.test(value)) {
-			error =
-				'Неверный email.Допустимые символы - латинские буквы, цифры и нижнее подчеркивание';
-		} else if (/@@/.test(value)) {
-			error = 'Неверный email. Недопустима последовательность @@';
-		} else if (value.length > 30) {
-			error = 'Неверный email. Должно быть меньше 30 символов.';
-		} else if (value.length < 3) {
-			error = 'Неверный email. Должно быть больше 3 символов.';
-		}
+		const error = validateAndGetErrorMessange(emailChangeScheme, value);
 		setErrorEmail(error);
 	};
-	const checkingPasswordVerification = () => {
-		let error = null;
-		if (password2 !== password) {
-			error = 'Пароли не совпадают. Проверьте правильность ввода';
-		} else if (password.length < 5) {
-			error = 'Пароль должен быть не менее 5 символов.';
-		}
-		return error;
-	};
+
 	useEffect(() => {
-		if (password2 !== '' && password !== '') {
-			const passwordError = checkingPasswordVerification();
-			setErrorPassword(passwordError || null);
-			if (passwordError === null && password2 === password) {
-				setTimeout(() => {
-					sumbitButtonRef.current?.focus();
-				}, 0);
-			}
+		let error = null;
+		const passwordError = validateAndGetErrorMessange(passwordChangeScheme, password);
+
+		if (password2 && password !== password2) {
+			error = 'Пароли не совпадают. Проверьте правильность ввода';
 		} else {
-			setErrorPassword(null);
+			error = passwordError;
 		}
-	}, [password, password2]);
+
+		setErrorPassword(error);
+
+		if (
+			!errorEmail &&
+			!errorPassword &&
+			password &&
+			password2 &&
+			password === password2 &&
+			sumbitButtonRef.current
+		) {
+			setTimeout(() => {
+				sumbitButtonRef.current?.focus();
+			}, 0);
+		}
+	}, [password, password2, email, errorEmail, errorPassword]);
 
 	return (
 		<div>
@@ -108,7 +121,13 @@ export const App = () => {
 					placeholder="Повторите пароль"
 					onChange={onChange}
 				/>
-				{errorEmail && <div className={styles.error}>{errorEmail}</div>}
+				{errorEmail && (
+					<div className={styles.error}>
+						{errorEmail.map((err, index) => (
+							<li key={index}>{err}</li>
+						))}
+					</div>
+				)}
 				{errorPassword && <div className={styles.error}>{errorPassword}</div>}
 				<button className={styles.button} type="button" onClick={resetState}>
 					Сброс
